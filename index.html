@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <title>GB Level Crossings</title>
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -11,74 +11,145 @@
 
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; }
+    body { font-family: Arial, sans-serif; touch-action: manipulation; }
     #map { width: 100vw; height: 100vh; }
 
+    /* Legend */
     .legend {
       background: white;
       padding: 10px 14px;
       border-radius: 8px;
       box-shadow: 0 1px 5px rgba(0,0,0,0.3);
-      font-size: 12px;
+      font-size: 13px;
       line-height: 1.8;
+      max-height: 80vh;
+      overflow-y: auto;
     }
-    .legend h4 { margin-bottom: 6px; font-size: 13px; }
-    .legend-item { display: flex; align-items: center; gap: 8px; }
+    .legend-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .legend-header h4 { font-size: 13px; }
+    .legend-toggle-btn {
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 12px;
+      color: #666;
+      padding: 4px 8px;
+      min-height: 32px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 2px 0;
+    }
+    .legend-item label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      min-height: 32px;
+    }
+    .legend-item input[type=checkbox] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
     .legend-dot {
-      width: 12px; height: 12px; border-radius: 50%;
+      width: 14px; height: 14px; border-radius: 50%;
       display: inline-block; flex-shrink: 0;
     }
 
-    .popup-title { font-weight: bold; font-size: 14px; margin-bottom: 6px; }
-    .popup-table { font-size: 12px; width: 100%; border-collapse: collapse; }
-    .popup-table td { padding: 2px 4px; }
+    /* Popups */
+    .leaflet-popup-content {
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .popup-title {
+      font-weight: bold;
+      font-size: 15px;
+      margin-bottom: 6px;
+    }
+    .popup-desc {
+      font-size: 13px;
+      color: #444;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+    .popup-table { font-size: 13px; width: 100%; border-collapse: collapse; }
+    .popup-table td { padding: 3px 5px; }
     .popup-table td:first-child { color: #666; white-space: nowrap; }
     .risk-badge {
       display: inline-block;
-      padding: 1px 7px;
+      padding: 2px 8px;
       border-radius: 10px;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: bold;
       color: white;
     }
     .protection-btn {
       display: block;
       width: 100%;
-      margin-top: 10px;
-      padding: 6px 10px;
+      margin-top: 12px;
+      padding: 10px;
       background: #FF9800;
       color: white;
       border: none;
-      border-radius: 5px;
-      font-size: 12px;
+      border-radius: 6px;
+      font-size: 14px;
       font-weight: bold;
       cursor: pointer;
       text-align: center;
+      min-height: 44px;
     }
-    .protection-btn:hover { background: #e65100; }
+    .protection-btn:active { background: #e65100; }
     .protection-box {
       margin-top: 8px;
-      padding: 8px;
+      padding: 10px;
       background: #fff8e1;
-      border-radius: 5px;
-      font-size: 12px;
+      border-radius: 6px;
+      font-size: 13px;
     }
-    .protection-section { margin-bottom: 6px; }
-    .protection-section ul { margin: 4px 0 0 16px; }
-    .protection-section li { margin-bottom: 2px; }
+    .protection-section { margin-bottom: 8px; }
+    .protection-section ul { margin: 4px 0 0 18px; }
+    .protection-section li { margin-bottom: 3px; }
     .streetview-btn {
       display: block;
-      margin-top: 10px;
-      padding: 6px 10px;
+      margin-top: 12px;
+      padding: 10px;
       background: #4285F4;
       color: white;
       text-align: center;
-      border-radius: 5px;
+      border-radius: 6px;
       text-decoration: none;
-      font-size: 12px;
+      font-size: 14px;
       font-weight: bold;
+      min-height: 44px;
+      line-height: 24px;
     }
-    .streetview-btn:hover { background: #3367d6; }
+    .streetview-btn:active { background: #3367d6; }
+
+    /* Mobile adjustments */
+    @media (max-width: 600px) {
+      .leaflet-popup-content-wrapper {
+        width: 92vw !important;
+        max-width: 92vw !important;
+      }
+      .leaflet-popup-content {
+        width: 100% !important;
+        margin: 12px !important;
+      }
+      .legend {
+        font-size: 14px;
+        padding: 10px 12px;
+        max-height: 60vh;
+      }
+    }
   </style>
 </head>
 <body>
@@ -105,24 +176,17 @@
     }
 
     function makeIcon(colour) {
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
-        <circle cx="9" cy="9" r="8" fill="${colour}" stroke="white" stroke-width="2"/>
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
+        <circle cx="10" cy="10" r="9" fill="${colour}" stroke="white" stroke-width="2"/>
       </svg>`;
       return L.divIcon({
         html: svg,
         className: '',
-        iconSize: [18, 18],
-        iconAnchor: [9, 9],
-        popupAnchor: [0, -10]
+        iconSize: [20, 20],
+        iconAnchor: [10, 10],
+        popupAnchor: [0, -12]
       });
     }
-
-    const map = L.map('map').setView([54.5, -2.5], 6);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 19
-    }).addTo(map);
 
     const CROSSING_DESCRIPTIONS = {
       "UWCT":      "User Worked Crossing with Telephone — the user must phone the signaller for permission before crossing",
@@ -166,7 +230,22 @@
       "TOB":       "Temporary Open Barrier crossing",
     };
 
-    const clusters = L.markerClusterGroup({ maxClusterRadius: 40 });
+    const map = L.map('map').setView([54.5, -2.5], 6);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19
+    }).addTo(map);
+
+    // One cluster group per risk level for filtering
+    const riskGroups = {};
+    Object.keys(RISK_COLOURS).forEach(label => {
+      riskGroups[label] = L.markerClusterGroup({ maxClusterRadius: 40 });
+      riskGroups[label].addTo(map);
+    });
+    // Unknown/unlabelled group
+    riskGroups['_other'] = L.markerClusterGroup({ maxClusterRadius: 40 });
+    riskGroups['_other'].addTo(map);
 
     fetch('level_crossings_merged.json')
       .then(r => r.json())
@@ -192,7 +271,7 @@
 
           const popup = `
             <div class="popup-title">${c.name}</div>
-            <p style="font-size:12px;color:#444;margin-bottom:8px;line-height:1.5">${description}</p>
+            <p class="popup-desc">${description}</p>
             <table class="popup-table">
               <tr><td>Type</td><td>${c.crossing_type || '&mdash;'}</td></tr>
               <tr><td>Status</td><td>${c.status || '&mdash;'}</td></tr>
@@ -216,35 +295,68 @@
             <a class="streetview-btn" href="${svUrl}" target="streetview">&#128247; Open in Street View</a>
           `;
 
-          marker.bindPopup(popup, { maxWidth: 280 });
-          clusters.addLayer(marker);
-        });
+          marker.bindPopup(popup, { maxWidth: 320 });
 
-        map.addLayer(clusters);
+          const group = riskGroups[c.individual_risk_label] || riskGroups['_other'];
+          group.addLayer(marker);
+        });
       });
 
-    // Legend
+    // Legend with filter checkboxes
     const legend = L.control({ position: 'bottomright' });
     legend.onAdd = () => {
       const div = L.DomUtil.create('div', 'legend');
+      const isMobile = window.innerWidth < 600;
+
       const items = Object.entries(RISK_COLOURS).map(([label, colour]) =>
-        `<div class="legend-item"><span class="legend-dot" style="background:${colour}"></span>${label}</div>`
+        `<div class="legend-item">
+          <label>
+            <input type="checkbox" data-risk="${label}" checked />
+            <span class="legend-dot" style="background:${colour}"></span>
+            ${label}
+          </label>
+        </div>`
       ).join('');
+
       div.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <h4 style="margin:0">Individual Risk</h4>
-          <button id="legend-toggle" style="border:none;background:none;cursor:pointer;font-size:11px;color:#666">Hide</button>
+        <div class="legend-header">
+          <h4>Individual Risk</h4>
+          <button class="legend-toggle-btn" id="legend-toggle">Hide</button>
         </div>
         <div id="legend-items">${items}</div>
       `;
+
+      // Start collapsed on mobile
       setTimeout(() => {
-        div.querySelector('#legend-toggle').addEventListener('click', function() {
-          const itemsEl = div.querySelector('#legend-items');
+        const itemsEl = div.querySelector('#legend-items');
+        const toggleBtn = div.querySelector('#legend-toggle');
+
+        if (isMobile) {
+          itemsEl.style.display = 'none';
+          toggleBtn.textContent = 'Show';
+        }
+
+        toggleBtn.addEventListener('click', function() {
           const hidden = itemsEl.style.display === 'none';
           itemsEl.style.display = hidden ? 'block' : 'none';
           this.textContent = hidden ? 'Hide' : 'Show';
         });
+
+        div.querySelectorAll('input[type=checkbox]').forEach(cb => {
+          cb.addEventListener('change', function() {
+            const label = this.dataset.risk;
+            if (this.checked) {
+              riskGroups[label].addTo(map);
+            } else {
+              map.removeLayer(riskGroups[label]);
+            }
+          });
+        });
+
+        L.DomEvent.disableClickPropagation(div);
+        L.DomEvent.disableScrollPropagation(div);
       }, 0);
+
       return div;
     };
     legend.addTo(map);

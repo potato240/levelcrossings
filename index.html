@@ -213,7 +213,7 @@
               ${c.line_speed ? `<div class="protection-section"><strong>&#128646; Line Speed:</strong> ${c.line_speed}</div>` : ''}
               ${c.trains_per_day ? `<div class="protection-section"><strong>&#128643; Trains per Day:</strong> ${c.trains_per_day}</div>` : ''}
             </div>` : ''}
-            <a class="streetview-btn" href="${svUrl}" target="_blank">&#128247; Open in Street View</a>
+            <a class="streetview-btn" href="${svUrl}" target="streetview">&#128247; Open in Street View</a>
           `;
 
           marker.bindPopup(popup, { maxWidth: 280 });

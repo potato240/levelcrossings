@@ -237,17 +237,15 @@
       maxZoom: 19
     }).addTo(map);
 
-    function makeClusterIcon(colour) {
-      return function(cluster) {
-        const count = cluster.getChildCount();
-        const size = count < 10 ? 28 : count < 100 ? 36 : 44;
-        return L.divIcon({
-          html: `<div style="background:${colour};width:${size}px;height:${size}px;border-radius:50%;border:3px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:${count < 10 ? 12 : 11}px">${count}</div>`,
-          className: '',
-          iconSize: [size, size],
-          iconAnchor: [size/2, size/2]
-        });
-      };
+    function makeClusterIcon(cluster) {
+      const count = cluster.getChildCount();
+      const size = count < 10 ? 28 : count < 100 ? 36 : 44;
+      return L.divIcon({
+        html: `<div style="background:#607D8B;width:${size}px;height:${size}px;border-radius:50%;border:3px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:${count < 10 ? 12 : 11}px">${count}</div>`,
+        className: '',
+        iconSize: [size, size],
+        iconAnchor: [size/2, size/2]
+      });
     }
 
     // One cluster group per risk level for filtering
@@ -255,14 +253,14 @@
     Object.keys(RISK_COLOURS).forEach(label => {
       riskGroups[label] = L.markerClusterGroup({
         maxClusterRadius: 40,
-        iconCreateFunction: makeClusterIcon(RISK_COLOURS[label])
+        iconCreateFunction: makeClusterIcon
       });
       riskGroups[label].addTo(map);
     });
     // Unknown/unlabelled group
     riskGroups['_other'] = L.markerClusterGroup({
       maxClusterRadius: 40,
-      iconCreateFunction: makeClusterIcon('#9E9E9E')
+      iconCreateFunction: makeClusterIcon
     });
     riskGroups['_other'].addTo(map);
 

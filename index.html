@@ -41,6 +41,31 @@
       font-weight: bold;
       color: white;
     }
+    .protection-btn {
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+      padding: 6px 10px;
+      background: #FF9800;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      text-align: center;
+    }
+    .protection-btn:hover { background: #e65100; }
+    .protection-box {
+      margin-top: 8px;
+      padding: 8px;
+      background: #fff8e1;
+      border-radius: 5px;
+      font-size: 12px;
+    }
+    .protection-section { margin-bottom: 6px; }
+    .protection-section ul { margin: 4px 0 0 16px; }
+    .protection-section li { margin-bottom: 2px; }
     .streetview-btn {
       display: block;
       margin-top: 10px;
@@ -178,6 +203,16 @@
               <tr><td>Assessed</td><td>${c.assessment_date || '&mdash;'}</td></tr>
               <tr><td>Next due</td><td>${c.next_due_date || '&mdash;'}</td></tr>
             </table>
+            ${c.protection_arrangements && c.protection_arrangements.length ? `
+            <button class="protection-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">
+              &#128274; Show Protection Info
+            </button>
+            <div class="protection-box" style="display:none">
+              ${c.key_risks && c.key_risks.length ? `<div class="protection-section"><strong>&#9888;&#65039; Key Risks</strong><ul>${c.key_risks.map(r => `<li>${r}</li>`).join('')}</ul></div>` : ''}
+              <div class="protection-section"><strong>&#128737;&#65039; Protection Arrangements</strong><ul>${c.protection_arrangements.map(p => `<li>${p}</li>`).join('')}</ul></div>
+              ${c.line_speed ? `<div class="protection-section"><strong>&#128646; Line Speed:</strong> ${c.line_speed}</div>` : ''}
+              ${c.trains_per_day ? `<div class="protection-section"><strong>&#128643; Trains per Day:</strong> ${c.trains_per_day}</div>` : ''}
+            </div>` : ''}
             <a class="streetview-btn" href="${svUrl}" target="_blank">&#128247; Open in Street View</a>
           `;
 

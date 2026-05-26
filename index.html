@@ -112,8 +112,15 @@
 
           const svUrl = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${c.lat},${c.lng}`;
 
+          const typeDesc = c.crossing_type ? `a ${c.crossing_type} level crossing` : 'a level crossing';
+          const routeDesc = c.route ? ` on the ${c.route} route` : '';
+          const regionDesc = c.region ? ` in the ${c.region} region` : '';
+          const riskDesc = c.individual_risk_label ? `, rated <strong>${c.individual_risk_label}</strong> individual risk` : '';
+          const description = `${c.name} is ${typeDesc}${routeDesc}${regionDesc}${riskDesc}.`;
+
           const popup = `
             <div class="popup-title">${c.name}</div>
+            <p style="font-size:12px;color:#444;margin-bottom:8px;line-height:1.5">${description}</p>
             <table class="popup-table">
               <tr><td>Type</td><td>${c.crossing_type || '&mdash;'}</td></tr>
               <tr><td>Status</td><td>${c.status || '&mdash;'}</td></tr>

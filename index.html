@@ -99,6 +99,48 @@
       maxZoom: 19
     }).addTo(map);
 
+    const CROSSING_DESCRIPTIONS = {
+      "UWCT":      "User Worked Crossing with Telephone — the user must phone the signaller for permission before crossing",
+      "FPS":       "Footpath Crossing with Stiles — a footpath crossing protected by stiles on each side",
+      "FPW":       "Footpath Crossing with Wicket Gates — a footpath crossing with small swing gates",
+      "CCTV":      "CCTV Monitored Crossing — monitored remotely by a signaller via CCTV cameras",
+      "AHB":       "Automatic Half Barrier Crossing — barriers lower automatically when a train approaches",
+      "UWC":       "User Worked Crossing — the user operates the gates or barriers themselves",
+      "FPK":       "Footpath Crossing with Kissing Gate — a footpath crossing with a round kissing gate",
+      "FPWM":      "Footpath Crossing with Wicket Gates and Miniature Stop Lights — has traffic lights for pedestrians",
+      "UWCMSL":    "User Worked Crossing with Miniature Stop Lights — the user operates the crossing but has miniature signal lights to warn of approaching trains",
+      "MCBOD":     "Manually Controlled Barriers with Obstacle Detection — a manned barrier crossing that can detect vehicles trapped on the crossing",
+      "MCB/MB":    "Manually Controlled Barriers — barriers operated by a signaller or crossing keeper",
+      "FPG":       "Footpath Crossing with Gates — a simple footpath crossing with full gates",
+      "AHB-X":     "Automatic Half Barrier Crossing with CCTV — automatic barriers also monitored by CCTV",
+      "FPGT":      "Footpath Crossing with Gates and Telephone — footpath crossing with gates and a phone to call the signaller",
+      "MGH":       "Manually Gated Halt — a manually operated gated crossing at a halt or station",
+      "FPGM":      "Footpath Crossing with Gates and Miniature Stop Lights — has full gates and miniature warning lights",
+      "ABCL":      "Automatic Barrier Crossing Locally Monitored — automatic barriers monitored locally rather than by a remote signaller",
+      "AOCLB":     "Automatic Open Crossing Locally Monitored with Barriers — an open crossing with automatic barriers, monitored locally",
+      "UWCM":      "User Worked Crossing with Miniature Stop Lights — like a UWC but with miniature signal lights",
+      "SPC":       "Summoned Presence Crossing — a crossing where a trained person must be present to supervise",
+      "FPV":       "Footpath Crossing with Vegetation Screen — a footpath crossing where vegetation reduces sightlines",
+      "OC":        "Open Crossing — a crossing with no barriers or gates; trains have priority",
+      "SBC":       "Swing Bridge Crossing — a crossing on a swing bridge over water",
+      "FPSM":      "Footpath Crossing with Stiles and Miniature Stop Lights — stiled footpath crossing with warning lights",
+      "AOCL":      "Automatic Open Crossing Locally Monitored — an open crossing monitored locally with automatic warnings",
+      "FPOM":      "Footpath Crossing Open with Miniature Stop Lights — an open footpath crossing with miniature signal lights",
+      "UWWM":      "User Worked Wicket Gate with Miniature Stop Lights",
+      "FPO":       "Footpath Open Crossing — an open footpath crossing with no gates or barriers",
+      "TMOB":      "Temporary Minimum Open Barrier — a temporary crossing arrangement using minimal barriers",
+      "MGW":       "Manually Gated Crossing with Wicket Gate",
+      "MCBR":      "Manually Controlled Barriers with Radio — barriers operated by a signaller communicating via radio",
+      "TMOG":      "Temporary Minimum Open Gate — a temporary crossing using minimum gating",
+      "TOG":       "Temporary Open Gate crossing",
+      "WG":        "Wicket Gate crossing — a simple crossing with small swing gates",
+      "UWW":       "User Worked Wicket Gate — the user opens and closes the wicket gate themselves",
+      "SMWL":      "Swing Bridge with Miniature Warning Lights",
+      "MG":        "Manually Gated Crossing — gates operated by hand",
+      "WAG":       "Weighted Automatic Gate — gates that return automatically to the closed position",
+      "TOB":       "Temporary Open Barrier crossing",
+    };
+
     const clusters = L.markerClusterGroup({ maxClusterRadius: 40 });
 
     fetch('level_crossings_merged.json')
@@ -112,14 +154,16 @@
 
           const svUrl = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${c.lat},${c.lng}`;
 
-          const typeDesc = c.crossing_type ? `a ${c.crossing_type} level crossing` : 'a level crossing';
+          const typeLabel = c.crossing_type || 'level';
+          const typeExplain = CROSSING_DESCRIPTIONS[c.crossing_type] || `a ${typeLabel} type level crossing`;
           const routeDesc = c.route ? ` on the ${c.route} route` : '';
           const regionDesc = c.region ? ` in the ${c.region} region` : '';
           const statusDesc = c.status ? ` It is currently <strong>${c.status.toLowerCase()}</strong>.` : '';
           const locationDesc = c.elr ? ` It sits at ${c.miles} miles and ${c.chains} chains along the ${c.elr} line.` : '';
+          const typeFullDesc = ` This type of crossing (${typeLabel}) means: ${typeExplain}.`;
           const riskDesc = c.individual_risk_label ? ` The crossing has been assessed as <strong>${c.individual_risk_label}</strong> individual risk and <strong>${c.collective_risk_label || 'unknown'}</strong> collective risk.` : '';
           const assessDesc = c.assessment_date ? ` It was last assessed on ${c.assessment_date}, with the next assessment due by ${c.next_due_date || 'unknown'}.` : '';
-          const description = `${c.name} is ${typeDesc}${routeDesc}${regionDesc}.${statusDesc}${locationDesc}${riskDesc}${assessDesc}`;
+          const description = `${c.name} is a ${typeLabel} level crossing${routeDesc}${regionDesc}.${statusDesc}${locationDesc}${typeFullDesc}${riskDesc}${assessDesc}`;
 
           const popup = `
             <div class="popup-title">${c.name}</div>

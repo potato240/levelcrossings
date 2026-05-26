@@ -1,1 +1,150 @@
-<!DOCTYPE html><html><body><h1>Level Crossings</h1></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GB Level Crossings</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; }
+    #map { width: 100vw; height: 100vh; }
+
+    .legend {
+      background: white;
+      padding: 10px 14px;
+      border-radius: 8px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.3);
+      font-size: 12px;
+      line-height: 1.8;
+    }
+    .legend h4 { margin-bottom: 6px; font-size: 13px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; }
+    .legend-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+      display: inline-block; flex-shrink: 0;
+    }
+
+    .popup-title { font-weight: bold; font-size: 14px; margin-bottom: 6px; }
+    .popup-table { font-size: 12px; width: 100%; border-collapse: collapse; }
+    .popup-table td { padding: 2px 4px; }
+    .popup-table td:first-child { color: #666; white-space: nowrap; }
+    .risk-badge {
+      display: inline-block;
+      padding: 1px 7px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: bold;
+      color: white;
+    }
+    .streetview-btn {
+      display: block;
+      margin-top: 10px;
+      padding: 6px 10px;
+      background: #4285F4;
+      color: white;
+      text-align: center;
+      border-radius: 5px;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .streetview-btn:hover { background: #3367d6; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+  <script>
+    const RISK_COLOURS = {
+      "Extremely high": "#8B0000",
+      "Very high":      "#D32F2F",
+      "High":           "#F44336",
+      "Above average":  "#FF9800",
+      "Average":        "#FFC107",
+      "Below average":  "#8BC34A",
+      "Low":            "#4CAF50",
+      "Very low":       "#2E7D32",
+      "Extremely low":  "#1B5E20",
+    };
+
+    function getColour(label) {
+      return RISK_COLOURS[label] || "#9E9E9E";
+    }
+
+    function makeIcon(colour) {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
+        <circle cx="9" cy="9" r="8" fill="${colour}" stroke="white" stroke-width="2"/>
+      </svg>`;
+      return L.divIcon({
+        html: svg,
+        className: '',
+        iconSize: [18, 18],
+        iconAnchor: [9, 9],
+        popupAnchor: [0, -10]
+      });
+    }
+
+    const map = L.map('map').setView([54.5, -2.5], 6);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19
+    }).addTo(map);
+
+    const clusters = L.markerClusterGroup({ maxClusterRadius: 40 });
+
+    fetch('level_crossings_merged.json')
+      .then(r => r.json())
+      .then(data => {
+        data.forEach(c => {
+          if (!c.lat || !c.lng) return;
+
+          const colour = getColour(c.individual_risk_label);
+          const marker = L.marker([c.lat, c.lng], { icon: makeIcon(colour) });
+
+          const svUrl = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${c.lat},${c.lng}`;
+
+          const popup = `
+            <div class="popup-title">${c.name}</div>
+            <table class="popup-table">
+              <tr><td>Type</td><td>${c.crossing_type || '&mdash;'}</td></tr>
+              <tr><td>Status</td><td>${c.status || '&mdash;'}</td></tr>
+              <tr><td>Route</td><td>${c.route || '&mdash;'}</td></tr>
+              <tr><td>Region</td><td>${c.region || '&mdash;'}</td></tr>
+              <tr><td>Risk</td><td><span class="risk-badge" style="background:${colour}">${c.individual_risk_label || '&mdash;'}</span></td></tr>
+              <tr><td>Collective risk</td><td>${c.collective_risk_label || '&mdash;'}</td></tr>
+              <tr><td>Assessed</td><td>${c.assessment_date || '&mdash;'}</td></tr>
+              <tr><td>Next due</td><td>${c.next_due_date || '&mdash;'}</td></tr>
+            </table>
+            <a class="streetview-btn" href="${svUrl}" target="_blank">&#128247; Open in Street View</a>
+          `;
+
+          marker.bindPopup(popup, { maxWidth: 280 });
+          clusters.addLayer(marker);
+        });
+
+        map.addLayer(clusters);
+      });
+
+    // Legend
+    const legend = L.control({ position: 'bottomright' });
+    legend.onAdd = () => {
+      const div = L.DomUtil.create('div', 'legend');
+      div.innerHTML = '<h4>Individual Risk</h4>' +
+        Object.entries(RISK_COLOURS).map(([label, colour]) =>
+          `<div class="legend-item"><span class="legend-dot" style="background:${colour}"></span>${label}</div>`
+        ).join('');
+      return div;
+    };
+    legend.addTo(map);
+  </script>
+</body>
+</html>

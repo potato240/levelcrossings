@@ -227,10 +227,24 @@
     const legend = L.control({ position: 'bottomright' });
     legend.onAdd = () => {
       const div = L.DomUtil.create('div', 'legend');
-      div.innerHTML = '<h4>Individual Risk</h4>' +
-        Object.entries(RISK_COLOURS).map(([label, colour]) =>
-          `<div class="legend-item"><span class="legend-dot" style="background:${colour}"></span>${label}</div>`
-        ).join('');
+      const items = Object.entries(RISK_COLOURS).map(([label, colour]) =>
+        `<div class="legend-item"><span class="legend-dot" style="background:${colour}"></span>${label}</div>`
+      ).join('');
+      div.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <h4 style="margin:0">Individual Risk</h4>
+          <button id="legend-toggle" style="border:none;background:none;cursor:pointer;font-size:11px;color:#666">Hide</button>
+        </div>
+        <div id="legend-items">${items}</div>
+      `;
+      setTimeout(() => {
+        div.querySelector('#legend-toggle').addEventListener('click', function() {
+          const itemsEl = div.querySelector('#legend-items');
+          const hidden = itemsEl.style.display === 'none';
+          itemsEl.style.display = hidden ? 'block' : 'none';
+          this.textContent = hidden ? 'Hide' : 'Show';
+        });
+      }, 0);
       return div;
     };
     legend.addTo(map);

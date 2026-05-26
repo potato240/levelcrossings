@@ -115,8 +115,11 @@
           const typeDesc = c.crossing_type ? `a ${c.crossing_type} level crossing` : 'a level crossing';
           const routeDesc = c.route ? ` on the ${c.route} route` : '';
           const regionDesc = c.region ? ` in the ${c.region} region` : '';
-          const riskDesc = c.individual_risk_label ? `, rated <strong>${c.individual_risk_label}</strong> individual risk` : '';
-          const description = `${c.name} is ${typeDesc}${routeDesc}${regionDesc}${riskDesc}.`;
+          const statusDesc = c.status ? ` It is currently <strong>${c.status.toLowerCase()}</strong>.` : '';
+          const locationDesc = c.elr ? ` It sits at ${c.miles} miles and ${c.chains} chains along the ${c.elr} line.` : '';
+          const riskDesc = c.individual_risk_label ? ` The crossing has been assessed as <strong>${c.individual_risk_label}</strong> individual risk and <strong>${c.collective_risk_label || 'unknown'}</strong> collective risk.` : '';
+          const assessDesc = c.assessment_date ? ` It was last assessed on ${c.assessment_date}, with the next assessment due by ${c.next_due_date || 'unknown'}.` : '';
+          const description = `${c.name} is ${typeDesc}${routeDesc}${regionDesc}.${statusDesc}${locationDesc}${riskDesc}${assessDesc}`;
 
           const popup = `
             <div class="popup-title">${c.name}</div>
